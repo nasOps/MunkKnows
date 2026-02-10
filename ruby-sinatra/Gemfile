@@ -7,4 +7,5 @@ gem "sinatra-activerecord"
 gem "activerecord", "~> 7.0"
 gem "sqlite3", "~> 1.6"
 gem "webrick" # Required for Ruby 3.0 and later to run Sinatra with the default server
-
+gem "ostruct"
+gem "rackup"
