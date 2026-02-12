@@ -16,8 +16,13 @@ class WhoknowsApp < Sinatra::Base
   set :views, File.expand_path('../views', __FILE__)
 
   # Session configuration (nødvendig for login/logout)
-  enable :sessions
-  set :session_secret, ENV.fetch('SESSION_SECRET') { 'development_secret_key' }
+  # enable :sessions
+  # set :session_secret, ENV.fetch('SESSION_SECRET') { 'development_secret_key' }
+
+   # Test - no DB needed - http://localhost:4567/hello
+  get "/hello" do
+    "Sinatra says Hello World!"
+  end
 
   ################################################################################
   # Before/After Request Handlers
@@ -72,7 +77,7 @@ class WhoknowsApp < Sinatra::Base
   # API Routes (JSON Responses)
   ###############################################################################
 
-  # GET /api/search - Search API endpoint
+  # GET /api/search - Search API endpoint - http://localhost:4567/api/search?q=test
   # OpenAPI: operationId "search_api_search_get"
   get '/api/search' do
     content_type :json
