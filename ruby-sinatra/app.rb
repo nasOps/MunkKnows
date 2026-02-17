@@ -24,6 +24,12 @@ class WhoknowsApp < Sinatra::Base
     "Sinatra says Hello World!"
   end
 
+  get "/health" do
+    status 200
+    "ok"
+  end
+
+
   ################################################################################
   # Before/After Request Handlers
   ################################################################################
