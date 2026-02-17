@@ -85,16 +85,24 @@ class WhoknowsApp < Sinatra::Base
     q = params[:q]
     language = params[:language] || 'en'
 
-    if q.nil? || q.empty?
-      search_results = []
-    else
-      search_results = Page.where(language: language)
-                           .where("content LIKE ?", "%#{q}%")
-                           .as_json
-    end
+    if q.nil? || q.strip.empty?
+      status 422
+      {
+        statusCode: 422,
+        message: "Query parameter 'q' is required"
+      }.to_json
 
-    { data: search_results }.to_json
-  end
+    else
+    search_results = Page.where(language: language)
+                         .where("content LIKE ?", "%#{q}%")
+                         .as_json
+
+    status 200
+    {
+      data: search_results
+    }.to_json
+    end
+    end
 
   # GET /api/weather - Weather API endpoint
   # OpenAPI: operationId "weather_api_weather_get"
@@ -153,4 +161,4 @@ class WhoknowsApp < Sinatra::Base
   end
 
   run! if app_file == $0
-end
+  end
