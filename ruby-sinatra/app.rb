@@ -8,7 +8,7 @@ require_relative 'models/page'
 # require_relative 'models/user' # Uncomment når User model er oprettet
 
 
-class WhoknowsApp < Sinatra::Base
+class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class
   register Sinatra::ActiveRecordExtension
 
   # Sinatra configuration
