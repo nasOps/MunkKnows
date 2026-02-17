@@ -62,9 +62,6 @@ class WhoknowsApp < Sinatra::Base
     erb :search
   end
 
-    erb :index
-  end
-
   # GET /weather - Weather page
   # OpenAPI: operationId "serve_weather_page_weather_get"
   get '/weather' do
