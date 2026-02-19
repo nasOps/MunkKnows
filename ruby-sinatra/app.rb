@@ -52,10 +52,6 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
   # GET / - Root/Search page - http://localhost:4567
   # OpenAPI: operationId "serve_root_page__get"
   get '/' do
-    erb :index
-  end
-
-  get '/search' do
     @q = params[:q]
     @language = params[:language] || 'en'
 
@@ -66,7 +62,7 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
       @results = []
     end
 
-    erb :search
+    erb :index
   end
 
   # GET /weather - Weather page
