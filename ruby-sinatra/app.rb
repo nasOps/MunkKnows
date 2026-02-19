@@ -151,8 +151,8 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
     else
       # .errors.full_messages.first giver foerste validation-fejl
       # f.eks. "You have to enter a username"
-      status 400
-      { statusCode: 400, message: user.errors.full_messages.first }.to_json
+      status 422
+      { detail: [{ loc: ["body"], msg: user.errors.full_messages.first, type: "value_error" }] }.to_json
     end
   end
 
