@@ -4,7 +4,8 @@ require 'sinatra'
 require 'sinatra/activerecord'
 require 'json'
 require_relative 'config/environment'
-require_relative 'models/page'        
+require_relative 'models/page' 
+require_relative 'models/user'       
 # require_relative 'models/user' # Uncomment når User model er oprettet
 
 
@@ -51,17 +52,21 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
   # GET / - Root/Search page - http://localhost:4567
   # OpenAPI: operationId "serve_root_page__get"
   get '/' do
-    @query = params[:q]
+    erb :index
+  end
+
+  get '/search' do
+    @q = params[:q]
     @language = params[:language] || 'en'
 
-    if @query
+    if @q && !@q.strip.empty?
       @results = Page.where(language: @language)
-                    .where("content LIKE ?", "%#{@query}%")
+                     .where("content LIKE ?", "%#{@q}%")
     else
       @results = []
     end
 
-    erb :index
+    erb :search
   end
 
   # GET /weather - Weather page
@@ -71,7 +76,9 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
 
   # GET /register - Registration page
   # OpenAPI: operationId "serve_register_page_register_get"
+ # GET /register - viser registrerings-formularen
   get '/register' do
+    erb :register, locals: { error: nil }
   end
 
   # GET /login - Login page
@@ -91,16 +98,24 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
     q = params[:q]
     language = params[:language] || 'en'
 
-    if q.nil? || q.empty?
-      search_results = []
-    else
-      search_results = Page.where(language: language)
-                           .where("content LIKE ?", "%#{q}%")
-                           .as_json
-    end
+    if q.nil? || q.strip.empty?
+      status 422
+      {
+        statusCode: 422,
+        message: "Query parameter 'q' is required"
+      }.to_json
 
-    { data: search_results }.to_json
-  end
+    else
+    search_results = Page.where(language: language)
+                         .where("content LIKE ?", "%#{q}%")
+                         .as_json
+
+    status 200
+    {
+      data: search_results
+    }.to_json
+    end
+    end
 
   # GET /api/weather - Weather API endpoint
   # OpenAPI: operationId "weather_api_weather_get"
@@ -110,8 +125,37 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
 
   # POST /api/register - User registration
   # OpenAPI: operationId "register_api_register_post"
+  # POST /api/register - opretter en ny bruger
+  # Flask-akvivalent: app.py linje 143-165
   post '/api/register' do
     content_type :json
+
+    password  = params[:password]
+    password2 = params[:password2]
+
+    # Tjek password-match foerst (ikke en model-validation,
+    # da password2 ikke er en kolonne i databasen)
+    if password != password2
+      status 400
+      return { statusCode: 400, message: "The two passwords do not match" }.to_json
+    end
+
+    user = User.new(
+      username: params[:username],
+      email:    params[:email],
+      password: User.hash_password(password || "")
+    )
+
+    if user.save
+      # Svarer til Flask's "You were successfully registered..."
+      status 200
+      { statusCode: 200, message: "You were successfully registered and can login now" }.to_json
+    else
+      # .errors.full_messages.first giver foerste validation-fejl
+      # f.eks. "You have to enter a username"
+      status 400
+      { statusCode: 400, message: user.errors.full_messages.first }.to_json
+    end
   end
 
   # POST /api/login - User login
@@ -183,4 +227,4 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
   end
 
   run! if app_file == $0
-end
+  end
