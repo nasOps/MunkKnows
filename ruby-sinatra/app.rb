@@ -5,7 +5,8 @@ require 'sinatra/activerecord'
 require 'json'
 require_relative 'config/environment'
 require_relative 'models/page' 
-require_relative 'models/user'       
+require_relative 'models/user'
+require_relative 'services/weather_service'
 
 
 class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular style
@@ -116,6 +117,13 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
   # OpenAPI: operationId "weather_api_weather_get"
   get '/api/weather' do
     content_type :json
+
+    weather_data = WeatherService.fetch
+
+    status 200
+    {
+      data: weather_data
+    }.to_json
   end
 
   # POST /api/register - User registration
