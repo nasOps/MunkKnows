@@ -6,6 +6,7 @@ require 'json'
 class WeatherService
   BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
 
+  puts "API KEY: #{ENV['OPENWEATHER_API_KEY']}"
   def self.fetch(city: "Copenhagen")
     api_key = ENV["OPENWEATHER_API_KEY"] # Reads the API key from .env file
     raise "Missing OPENWEATHER_API_KEY" if api_key.nil?

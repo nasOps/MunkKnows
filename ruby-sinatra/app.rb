@@ -111,19 +111,32 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
       data: search_results
     }.to_json
     end
-    end
+  end
 
   # GET /api/weather - Weather API endpoint
   # OpenAPI: operationId "weather_api_weather_get"
   get '/api/weather' do
     content_type :json
 
-    weather_data = WeatherService.fetch
+    begin
+      weather_data = WeatherService.fetch
 
-    status 200
-    {
-      data: weather_data
-    }.to_json
+      status 200
+      { data: weather_data }.to_json
+
+      # Error handling below is not defined in the OpenAPI Spec
+    rescue => e
+      status 500
+      {
+        detail: [
+          {
+            loc: ["server"],
+            msg: e.message,
+            type: "external_service_error"
+          }
+        ]
+      }.to_json
+    end
   end
 
   # POST /api/register - User registration
