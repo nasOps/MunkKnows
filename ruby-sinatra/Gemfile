@@ -10,3 +10,7 @@ gem "ostruct" # We avoid this warning: warning: ostruct was loaded from the stan
 gem "rackup"
 gem "puma"
 gem "dotenv"
+group :test do
+  gem 'rspec'
+  gem 'rack-test' # Simulates HTTP requests in tests
+end
