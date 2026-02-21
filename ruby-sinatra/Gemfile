@@ -3,8 +3,9 @@
 source 'https://rubygems.org'
 
 gem 'activerecord', '~> 7.0'
-gem 'ostruct' # We avoid this warning: warning: ostruct was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 4.0.0.
-gem 'puma'
+# ostruct is no longer part of default gems from Ruby 4.0
+# so we include it explicitly to avoid warnings
+gem 'ostruct'
 gem 'rackup'
 gem 'sinatra', '~> 3.0'
 gem 'sinatra-activerecord'

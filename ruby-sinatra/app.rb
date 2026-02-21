@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# = (Less memory usage by freezing string literals)
+
 # Main application file - Routes + Controllers (combined)
 require 'dotenv/load'
 require 'sinatra'
@@ -7,7 +10,8 @@ require_relative 'config/environment'
 require_relative 'models/page'
 require_relative 'models/user'
 
-class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular style
+# App is defined as modular Sinatra class
+class WhoknowsApp < Sinatra::Base
   register Sinatra::ActiveRecordExtension
 
   # Sinatra configuration
@@ -218,5 +222,5 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
     status 500
   end
 
-  run! if app_file == $0
+  run! if app_file == $PROGRAM_NAME
 end

@@ -13,3 +13,10 @@ Metrics/ClassLength:
 
 Style/Documentation:
   Enabled: false
+
+# To be deleted when we have all endpoints implemented
+Style/EmptyMethod:
+  Enabled: false
+
+Lint/EmptyBlock:
+  Enabled: false

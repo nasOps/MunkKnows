@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'digest'
 
 # User-model - mapper til 'users'-tabellen via ActiveRecord.
@@ -19,7 +21,7 @@ class User < ActiveRecord::Base
   end
 
   # Instansmetode - kaldes paa et user-objekt: user.verify_password("test")
-  def verify_password(plain_password)
+  def verify_password?(plain_password)
     password == User.hash_password(plain_password)
   end
 end
