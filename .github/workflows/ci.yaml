@@ -28,6 +28,7 @@ jobs:
         with:
           ruby-version: '3.2.3'
           bundler-cache: true  # cacher gems automatically for faster builds
+          working-directory: ruby-sinatra
 
       - name: Run RuboCop
         run: bundle exec rubocop
