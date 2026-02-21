@@ -21,7 +21,7 @@ class WhoknowsApp < Sinatra::Base
 
   # Session configuration (nødvendig for login/logout)
   enable :sessions
-  set :session_secret, ENV.fetch('SESSION_SECRET')  do
+  set :session_secret, ENV.fetch('SESSION_SECRET') do
     'x' * 64
   end
 
