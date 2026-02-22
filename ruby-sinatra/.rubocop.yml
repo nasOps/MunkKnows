@@ -18,5 +18,13 @@ Style/Documentation:
 Style/EmptyMethod:
   Enabled: false
 
+# Enables empty boxes
+# TODO delete when we have all endpoints implemented
 Lint/EmptyBlock:
   Enabled: false
+
+# No class instance variable required
+# since we have no subclasses
+Style/ClassVars:
+  Enabled: false
+
