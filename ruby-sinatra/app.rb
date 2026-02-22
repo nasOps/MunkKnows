@@ -79,6 +79,8 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
   # GET /login - Login page
   # OpenAPI: operationId "serve_login_page_login_get"
   get '/login' do
+    @error = nil
+    erb :login
   end
 
   ################################################################################
@@ -179,8 +181,7 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
     # Gem bruger-id i session - svarer til Flask's session['user_id'] = user['id']
     session[:user_id] = user.id
 
-    status 200
-    { statusCode: 200, message: "You were logged in" }.to_json
+    redirect '/'
   end
 
   # GET /api/logout - User logout
