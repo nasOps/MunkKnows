@@ -178,10 +178,13 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
       }.to_json
     end
 
+    # TODO: Maybe add if both username and password is wrong, msg: "Invalid username or password"
+
     # Gem bruger-id i session - svarer til Flask's session['user_id'] = user['id']
     session[:user_id] = user.id
 
-    redirect '/'
+    status 200 
+      { statusCode: 200, message: "You were logged in" }.to_json
   end
 
   # GET /api/logout - User logout
