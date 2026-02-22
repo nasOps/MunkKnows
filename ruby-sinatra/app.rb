@@ -14,6 +14,7 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
   # Sinatra configuration
   set :public_folder, File.expand_path('../public', __FILE__)
   set :views, File.expand_path('../views', __FILE__)
+  set :database_file, File.expand_path('../config/database.yml',__FILE__)
 
   # Session configuration (nødvendig for login/logout)
    enable :sessions
