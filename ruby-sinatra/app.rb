@@ -29,7 +29,6 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
     "ok"
   end
 
-
   ################################################################################
   # Before/After Request Handlers
   ################################################################################
