@@ -277,6 +277,8 @@ def api_login():
     return render_template('login.html', error=error)
 
 
+# TODO: REMOVE - Replaced by Ruby/Sinatra implementation
+# LEGACY CODE - DELETE AFTER MIGRATION COMPLETE
 @app.route('/api/register', methods=['POST'])
 def api_register():
     """Registers a new user
@@ -333,6 +335,8 @@ def api_register():
         return redirect(url_for('login'))
     return render_template('register.html', error=error)
 
+# TODO: REMOVE - Replaced by Ruby/Sinatra implementation
+# LEGACY CODE - DELETE AFTER MIGRATION COMPLETE
 @app.route('/api/logout')
 def logout():
     """Logs the user out
