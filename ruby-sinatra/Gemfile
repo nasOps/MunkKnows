@@ -10,6 +10,7 @@ gem 'rackup'
 gem 'sinatra', '~> 3.0'
 gem 'sinatra-activerecord'
 gem 'sqlite3', '~> 1.6'
+gem 'puma'
 
 group :test do
   gem 'rack-test' # Simulates HTTP requests in tests
