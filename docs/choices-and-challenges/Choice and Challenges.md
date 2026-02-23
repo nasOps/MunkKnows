@@ -560,3 +560,62 @@ Valget understøtter DevOps-principper:
 - Vigtigheden af at isolere ekstern integration i service layer
 - Caching som strategi mod rate limiting og load
 
+---
+
+## API design: JSON vs HTML responses ved login
+
+**Context**
+`POST /api/login` skal ifølge spec'en returnere JSON. Legacy koden (Flask) håndterede derimod både login-logik og visning af fejlbeskeder server-side ved at returnere HTML direkte fra routen.
+
+**Challenge**
+Når en bruger logger ind med forkerte oplysninger via en HTML-formular, forventer browseren at blive sendt til en ny side eller få en opdateret side tilbage - ikke rå JSON. Det betød at fejlbeskeder ikke blev vist i viewet, men i stedet som JSON-tekst i browseren.
+
+**Choice**
+Håndtér redirect og fejlvisning via JavaScript i viewet frem for at lade serveren returnere HTML fra API-endpointet.
+
+**Beslutning**
+`POST /api/login` returnerer udelukkende JSON. JavaScript i `login.erb` intercepter form-submit, poster til API-endpointet og håndterer svaret - enten redirect til forsiden ved success eller visning af fejlbesked ved fejl.
+
+**Hvordan valget blev truffet**
+Spec'en definerer `POST /api/login` som et JSON-endpoint. At afvige fra det ville bryde spec'en og skabe en uklar adskillelse mellem API og frontend. Legacy koden brød faktisk spec'en på dette punkt.
+
+**Fordele**
+- Overholder spec'en
+- Klar adskillelse mellem API og frontend
+- API-endpointet kan bruges af andre klienter end browseren
+
+**Ulemper**
+- Kræver JavaScript i viewet
+- Lidt mere kompleksitet i frontend
+
+**Læring**
+Når man designer et JSON API skal man tænke på hvem der konsumerer det. En browser forventer HTML, men et API-endpoint bør ikke tage hensyn til det - det er frontend-lagets ansvar at håndtere svaret.
+
+---
+
+## Database konfiguration: `set :database_file` placering
+
+**Context**
+I Sinatra modular style (`Sinatra::Base`) skal applikationskonfiguration defineres inden for applikationsklassen. `set` er en Sinatra-specifik metode der registrerer konfiguration på klassen.
+
+**Challenge**
+`set :database_file` var placeret i `config/environment.rb` uden for `WhoknowsApp` klassen. Konfigurationen blev derfor aldrig registreret korrekt af Sinatra, hvilket betød at ActiveRecord ikke fik besked om hvilken database den skulle forbinde til.
+
+**Choice**
+Flyt `set :database_file` ind i `WhoknowsApp` klassen i `app.rb`.
+
+**Beslutning**
+`set :database_file` placeres i `app.rb` inden i `WhoknowsApp` klassen. `config/environment.rb` håndterer kun gem-loading og generel opsætning.
+
+**Hvordan valget blev truffet**
+Fejlen blev opdaget ved at applikationen tilsyneladende virkede, men ActiveRecord's debug-log viste mistænkelig adfærd. Efter at have isoleret problemet til database-konfigurationen blev det klart at `set` ikke virker uden for en Sinatra-klasse.
+
+**Fordele**
+- Konfigurationen er garanteret registreret ved opstart
+- Klar adskillelse - `environment.rb` loader gems, `app.rb` konfigurerer applikationen
+
+**Ulemper**
+- `app.rb` får lidt mere ansvar
+
+**Læring**
+Sinatra-specifikke metoder som `set` skal altid kaldes inden for applikationsklassen når man bruger modular style. Classic style (`require 'sinatra'`) ville have tilladt `set` uden for en klasse, men modular style kræver eksplicit klassekontekst.

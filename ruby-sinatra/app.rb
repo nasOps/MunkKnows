@@ -5,18 +5,20 @@
 # Main application file - Routes + Controllers (combined)
 require 'dotenv/load'
 require 'sinatra'
-require 'sinatra/activerecord'
+# require 'sinatra/activerecord'
 require 'json'
 require_relative 'config/environment'
 require_relative 'models/page'
 require_relative 'models/user'
 require_relative 'services/weather_service'
 
-# App is defined as modular Sinatra class
+# TODO: Change class name to MonkKnowsApp
+# App is defined as modular Sinatra class# TODO Change class name to MonkKnowsApp
 class WhoknowsApp < Sinatra::Base
   register Sinatra::ActiveRecordExtension
 
   # Sinatra configuration
+  set :database_file, File.expand_path('config/database.yml', __dir__)
   set :public_folder, File.expand_path('public', __dir__)
   set :views, File.expand_path('views', __dir__)
 
@@ -88,6 +90,8 @@ class WhoknowsApp < Sinatra::Base
   # GET /login - Login page
   # OpenAPI: operationId "serve_login_page_login_get"
   get '/login' do
+    @error = nil
+    erb :login
   end
 
   ################################################################################
@@ -198,12 +202,14 @@ class WhoknowsApp < Sinatra::Base
       }.to_json
     end
 
-    unless user.verify_password(params[:password])
+    unless user.verify_password?(params[:password])
       status 422
       return {
         detail: [{ loc: %w[body password], msg: 'Invalid password', type: 'value_error' }]
       }.to_json
     end
+
+    # TODO: Maybe add if both username and password is wrong, msg: "Invalid username or password"
 
     # Gem bruger-id i session - svarer til Flask's session['user_id'] = user['id']
     session[:user_id] = user.id
