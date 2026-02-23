@@ -411,6 +411,157 @@ Afvigelse 2 — `language` parameteren bruger `default: "en"` fremfor Anders' `a
 
 ---
 
+## Implementering af GitHub Actions CI pipeline
+
+### Context
+Projektet migreres fra Flask til Sinatra.
+Der var ingen automatisk validering af:
+- Tests
+- Code style
+- Dependency consistency
+Vi ønskede en deterministisk og reproducerbar build-proces.
+
+### Challenge
+- Monorepo struktur (Flask + Ruby i samme repo)
+- Ruby-projekt ligger i subfolder (ruby-sinatra)
+- Environment variables (SESSION_SECRET) manglede i CI
+- Gemfile og Gemfile.lock skulle være synkroniseret
+
+### Choice
+**Beslutning:**
+Vi implementerede en GitHub Actions CI pipeline med:
+- ruby/setup-ruby
+- Fast Ruby-version (3.2.3)
+- Bundler install
+- RuboCop lint step
+- RSpec test step
+
+**Rationale:**
+- GitHub Actions er native i GitHub
+- Minimal opsætning
+- Understøtter caching og version pinning 
+
+**Fordele (forudset):**
+- Automatisk test ved push og pull request
+- Deterministisk build (Ruby-version pinned)
+- Fanger fejl før merge
+- Sikrer Gemfile.lock konsistens (frozen mode)
+
+**Ulemper (forudset):**
+- Kræver korrekt environment setup
+- Monorepo kræver eksplicit working-directory
+- CI kan fejle på små lint-fejl (strengt setup)
+
+**Retrospektiv:**
+
+
+**Læring:**
+- CI kører i et rent miljø – intet er implicit
+- Environment variables skal eksplicit sættes
+- Gemfile.lock er kritisk for stabile builds
+- SHA pinning kan give kompatibilitetsudfordringer
+
+---
+
+## Integration af RuboCop som quality gate
+
+### Context
+Koden havde inkonsistent formatting og ingen style enforcement.
+Projektet er i migreringsfase, hvilket øger risiko for teknisk gæld.
+
+### Challenge
+- 100+ initial offenses
+- Windows line endings (CRLF)
+- Strenge default regler
+- Placeholder-metoder under migration
+
+### Choice
+**Beslutning:** Vi integrerede RuboCop med projekt-tilpasset .rubocop.yml.
+
+**Rationale:**
+- RuboCop er standard i Ruby-økosystemet
+- Let integration i CI
+- Understøtter safe og unsafe autocorrect
+- Giver ensartet code style
+
+**Fordele (forudset):**
+- Konsistent kodebase
+- Reducerer style-diskussioner i PR
+- Automatisk enforcement via CI
+- Etablerer clean baseline (0 offenses)
+
+**Ulemper (forudset):**
+- Kan virke rigidt 
+- Kræver initial oprydning
+- Regler skal tilpasses projektets fase
+
+**Retrospektiv:**
+
+
+**Læring:**
+- Safe vs Unsafe autocorrect er vigtigt at forstå
+- Lint bør tunes – ikke blindt accepteres
+- Empty methods kan være legitime under migration
+
+---
+
+## 3rd party Integration af weather API
+
+### Context
+- Ny feature: vise vejrdata i applikationen via ekstern service.
+- OpenAPI-spec krævede /api/weather (JSON) og /weather (HTML).
+- Underviser simulerer load og kan ramme endpoint mange gange.
+
+### Challenge
+- Frontend eller backend implementering?
+
+**Overvejede alternativer:**
+- Frontend: Fetch direkte fra browser → mindre backend kode
+
+### Choice
+**Beslutning:** Backend implementering
+
+**Implementering:**
+
+```markdown
+1) Valg af tredjepart: OpenWeather API (https://openweathermap.org/api)
+2) Serviceklasse (WeatherService) isolerer integration fra routes
+3) API key gemt i environment variable (OPENWEATHER_API_KEY)
+4) GET /api/weather returnerer JSON (StandardResponse)
+5) Tilføjede in-memory caching ved at bruge klasse-variabel for at reducere antal API calls som har rate limits på gratis subscription (10 min TTL)
+```
+
+**Rationale:**
+Backend integration giver bedre kontrol over:
+- Security (API key eksponeres ikke)
+- Rate limiting (caching reducerer calls)
+- Fejlhåndtering og fallback 
+- Overholdelse af OpenAPI-kontrakt 
+
+Valget understøtter DevOps-principper:
+- Separation of concerns 
+- Secret management via environment variables 
+- Robusthed mod eksterne afhængigheder
+
+**Fordele:**
+- Rate limit kontrol med caching: et request sendes til API, 100 brugere får cached svar
+- Ingen CORS problemer (hvis frontend fetcher direkte fra browser, skal API'en håndtere CORS headers)
+- API nøgle eksponeres ikke i frontend
+- Centraliseret fejlhåndtering i backend
+
+**Ulemper:**
+- Mere server load
+- Mere kode: HTTP client, error handling, caching-logik, ENV variabler
+
+**Retrospektiv:** (Opdateres løbende)
+-OpenWeather API keys har aktiveringsforsinkelse (ikke instant)
+
+**Læring:**
+- Vigtigheden af at isolere ekstern integration i service layer
+- Caching som strategi mod rate limiting og load
+
+---
+
 ## API design: JSON vs HTML responses ved login
 
 **Context**
