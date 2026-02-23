@@ -94,7 +94,6 @@ class WhoknowsApp < Sinatra::Base
   # OpenAPI: operationId "serve_login_page_login_get"
   get '/login' do
     redirect '/' if logged_in?
-    
     @error = nil
     erb :login
   end
@@ -237,12 +236,13 @@ class WhoknowsApp < Sinatra::Base
   ################################################################################
 
   helpers do
+    # Returns the current user from session (nil if nobody is logged in)
     def current_user
-      @current_user
+      @current_user ||= User.find_by(id: session[:user_id]) if session[:user_id]
     end
 
     def logged_in?
-      !@current_user.nil?
+      !current_user.nil?
     end
   end
 
