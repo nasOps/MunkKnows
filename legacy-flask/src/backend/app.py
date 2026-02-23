@@ -149,7 +149,8 @@ def about():
     """
     return render_template('about.html')
 
-
+# TODO: REMOVE - Replaced by Ruby/Sinatra implementation
+# LEGACY CODE - DELETE AFTER MIGRATION COMPLETE
 @app.route('/login')
 def login():
     """Serve the login page
@@ -236,7 +237,8 @@ def api_search():
 
     return jsonify(search_results=search_results)
 
-
+# TODO: REMOVE - Replaced by Ruby/Sinatra implementation
+# LEGACY CODE - DELETE AFTER MIGRATION COMPLETE
 @app.route('/api/login', methods=['POST'])
 def api_login():
     """Logs the user in

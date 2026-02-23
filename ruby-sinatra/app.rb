@@ -1,40 +1,47 @@
+# frozen_string_literal: true
+
+# = (Less memory usage by freezing string literals)
+
 # Main application file - Routes + Controllers (combined)
 require 'dotenv/load'
 require 'sinatra'
-require 'sinatra/activerecord'
+# require 'sinatra/activerecord'
 require 'json'
 require_relative 'config/environment'
-require_relative 'models/page' 
-require_relative 'models/user'       
+require_relative 'models/page'
+require_relative 'models/user'
+require_relative 'services/weather_service'
 
-
-class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular style
+# TODO: Change class name to MonkKnowsApp
+# App is defined as modular Sinatra class# TODO Change class name to MonkKnowsApp
+class WhoknowsApp < Sinatra::Base
   register Sinatra::ActiveRecordExtension
 
   # Sinatra configuration
-  set :public_folder, File.expand_path('../public', __FILE__)
-  set :views, File.expand_path('../views', __FILE__)
+  set :database_file, File.expand_path('config/database.yml', __dir__)
+  set :public_folder, File.expand_path('public', __dir__)
+  set :views, File.expand_path('views', __dir__)
 
   # Session configuration (nødvendig for login/logout)
-   enable :sessions
-   set :session_secret, ENV.fetch('SESSION_SECRET') { 'development_secret_key' }
+  enable :sessions
+  set :session_secret,
+      ENV.fetch('SESSION_SECRET') { 'x' * 64 }
 
-   # Test - no DB needed - http://localhost:4567/hello
-  get "/hello" do
-    "Sinatra says Hello World!"
+  # Test - no DB needed - http://localhost:4567/hello
+  get '/hello' do
+    'Sinatra says Hello World!'
   end
 
-  get "/health" do
+  get '/health' do
     status 200
-    "ok"
+    'ok'
   end
-
 
   ################################################################################
   # Before/After Request Handlers
   ################################################################################
 
-   before do
+  before do
     # Tilsvarende Flask's before_request
     # Tjek om bruger er logged in, load user fra session, etc.
   end
@@ -54,12 +61,12 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
     @q = params[:q]
     @language = params[:language] || 'en'
 
-    if @q && !@q.strip.empty?
-      @results = Page.where(language: @language)
-                     .where("content LIKE ?", "%#{@q}%")
-    else
-      @results = []
-    end
+    @results = if @q && !@q.strip.empty?
+                 Page.where(language: @language)
+                     .where('content LIKE ?', "%#{@q}%")
+               else
+                 []
+               end
 
     erb :index
   end
@@ -67,11 +74,15 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
   # GET /weather - Weather page
   # OpenAPI: operationId "serve_weather_page_weather_get"
   get '/weather' do
+    content_type :html
+    status 200
+    @weather = WeatherService.fetch # @weather makes it accessible in weather.erb
+    erb :weather
   end
 
   # GET /register - Registration page
   # OpenAPI: operationId "serve_register_page_register_get"
- # GET /register - viser registrerings-formularen
+  # GET /register - viser registrerings-formularen
   get '/register' do
     erb :register, locals: { error: nil }
   end
@@ -79,6 +90,8 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
   # GET /login - Login page
   # OpenAPI: operationId "serve_login_page_login_get"
   get '/login' do
+    @error = nil
+    erb :login
   end
 
   ################################################################################
@@ -101,21 +114,41 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
       }.to_json
 
     else
-    search_results = Page.where(language: language)
-                         .where("content LIKE ?", "%#{q}%")
-                         .as_json
+      search_results = Page.where(language: language)
+                           .where('content LIKE ?', "%#{q}%")
+                           .as_json
 
-    status 200
-    {
-      data: search_results
-    }.to_json
+      status 200
+      {
+        data: search_results
+      }.to_json
     end
-    end
+  end
 
   # GET /api/weather - Weather API endpoint
   # OpenAPI: operationId "weather_api_weather_get"
   get '/api/weather' do
     content_type :json
+
+    begin
+      weather_data = WeatherService.fetch
+
+      status 200
+      { data: weather_data }.to_json
+
+      # Error handling below is not defined in the OpenAPI Spec
+    rescue StandardError => e
+      status 500
+      {
+        detail: [
+          {
+            loc: ['server'],
+            msg: e.message,
+            type: 'external_service_error'
+          }
+        ]
+      }.to_json
+    end
   end
 
   # POST /api/register - User registration
@@ -133,25 +166,25 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
     if password != password2
       status 422
       return {
-        detail: [{ loc: ["body", "password2"], msg: "The two passwords do not match", type: "value_error" }]
+        detail: [{ loc: %w[body password2], msg: 'The two passwords do not match', type: 'value_error' }]
       }.to_json
     end
 
     user = User.new(
       username: params[:username],
-      email:    params[:email],
-      password: User.hash_password(password || "")
+      email: params[:email],
+      password: User.hash_password(password || '')
     )
 
     if user.save
       # Svarer til Flask's "You were successfully registered..."
       status 200
-      { statusCode: 200, message: "You were successfully registered and can login now" }.to_json
+      { statusCode: 200, message: 'You were successfully registered and can login now' }.to_json
     else
       # .errors.full_messages.first giver foerste validation-fejl
       # f.eks. "You have to enter a username"
       status 422
-      { detail: [{ loc: ["body"], msg: user.errors.full_messages.first, type: "value_error" }] }.to_json
+      { detail: [{ loc: ['body'], msg: user.errors.full_messages.first, type: 'value_error' }] }.to_json
     end
   end
 
@@ -165,22 +198,24 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
     if user.nil?
       status 422
       return {
-        detail: [{ loc: ["body", "username"], msg: "Invalid username", type: "value_error" }]
+        detail: [{ loc: %w[body username], msg: 'Invalid username', type: 'value_error' }]
       }.to_json
     end
 
-    unless user.verify_password(params[:password])
+    unless user.verify_password?(params[:password])
       status 422
       return {
-        detail: [{ loc: ["body", "password"], msg: "Invalid password", type: "value_error" }]
+        detail: [{ loc: %w[body password], msg: 'Invalid password', type: 'value_error' }]
       }.to_json
     end
+
+    # TODO: Maybe add if both username and password is wrong, msg: "Invalid username or password"
 
     # Gem bruger-id i session - svarer til Flask's session['user_id'] = user['id']
     session[:user_id] = user.id
 
     status 200
-    { statusCode: 200, message: "You were logged in" }.to_json
+    { statusCode: 200, message: 'You were logged in' }.to_json
   end
 
   # GET /api/logout - User logout
@@ -189,7 +224,7 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
     content_type :json
     session.clear
     status 200
-    { statusCode: 200, message: "You were logged out" }.to_json
+    { statusCode: 200, message: 'You were logged out' }.to_json
   end
 
   ################################################################################
@@ -197,17 +232,13 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
   ################################################################################
 
   helpers do
-    def current_user
-    end
+    def current_user; end
 
-    def logged_in?
-    end
+    def logged_in?; end
 
-    def hash_password(password)
-    end
+    def hash_password(password); end
 
-    def verify_password(stored_hash, password)
-    end
+    def verify_password(stored_hash, password); end
   end
 
   ################################################################################
@@ -224,5 +255,5 @@ class WhoknowsApp < Sinatra::Base # App is defined as a Ruby-class = modular sty
     status 500
   end
 
-  run! if app_file == $0
-  end
+  run! if app_file == $PROGRAM_NAME
+end
