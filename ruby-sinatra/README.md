@@ -1,5 +1,8 @@
 # Whoknows – Flask → Sinatra Migration
 
+![<CI Pipeline Main>](https://github.com/<nasops>/<monkknows>/actions/workflows/<ci.yml>/badge.svg?branch=main)
+![<CI Pipeline Developement>](https://github.com/<nasops>/<monkknows>/actions/workflows/<ci.yml>/badge.svg?branch=development)
+
 Dette repository indeholder et legacy **Flask (Python)** projekt, som migreres gradvist til **Sinatra (Ruby)** som en del af et DevOps-/datamatikerprojekt.
 
 Målet er at omskrive applikationen **inkrementelt**, uden at bryde eksisterende funktionalitet.
@@ -218,13 +221,3 @@ Configuration is in `.rubocop.yml`. RuboCop runs automatically in CI on push and
 - Klar adskillelse mellem legacy og ny kode
 - Inkrementel migration (ingen big-bang rewrite)
 - Dokumenterede teknologivalg
-
----
-
-## Videre arbejde
-
-- [ ] `/about` route i Sinatra
-- [ ] SQLite-connection i Sinatra
-- [ ] `/api/search` migration
-- [ ] Sammenligning af Flask vs Sinatra request lifecycle
-- [ ] Dockerisering
