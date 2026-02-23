@@ -619,3 +619,44 @@ Fejlen blev opdaget ved at applikationen tilsyneladende virkede, men ActiveRecor
 
 **Læring**
 Sinatra-specifikke metoder som `set` skal altid kaldes inden for applikationsklassen når man bruger modular style. Classic style (`require 'sinatra'`) ville have tilladt `set` uden for en klasse, men modular style kræver eksplicit klassekontekst.
+
+---
+
+## Test miljø: In-memory SQLite database
+
+**Context**
+RSpec-tests kørte lokalt uden problemer, fordi en `whoknows.db` SQLite fil eksisterede på udviklingsmaskinen. I CI (GitHub Actions) eksisterer denne fil ikke, da den er tilføjet til `.gitignore`.
+
+**Challenge**
+Uden en database-fil kastede ActiveRecord en exception ved første `User.find_by(...)` kald. Sinatra's globale `error`-blok fangede exceptionen og returnerede 500 i stedet for 422. Testen fejlede derfor konsekvent i CI:
+
+```
+expected: 422
+     got: 500
+```
+
+Problemet var usynligt lokalt fordi databasen altid fandtes der.
+
+**Choice**
+Tilføj et dedikeret `test` miljø i `database.yml` der bruger SQLite `:memory:` og bootstrap schema i `spec_helper.rb` via `before(:suite)`.
+
+**Beslutning**
+- `config/database.yml` får en `test` sektion med `database: ":memory:"`
+- `spec_helper.rb` sætter `ENV['RACK_ENV'] = 'test'` øverst så Sinatra/ActiveRecord vælger test-konfigurationen
+- `before(:suite)` opretter `users` og `pages` tabeller i hukommelsen før testene kører
+
+**Hvordan valget blev truffet**
+In-memory SQLite er standard tilgangen til database-tests i Ruby-økosystemet. Det eliminerer filsystem-afhængigheder og giver hurtigere tests. Alternativet (at committe en `.db` fil eller oprette den i CI) ville have tilføjet unødvendig kompleksitet i CI-setup.
+
+**Fordele**
+- Tests er selvstændige og kræver ingen ekstern opsætning
+- Kører identisk lokalt og i CI
+- Hurtigere end fil-baseret SQLite (ingen disk I/O)
+- Ingen risiko for at test-data forurener udviklingsdatabasen
+
+**Ulemper**
+- Schema i `spec_helper.rb` skal holdes synkroniseret med den faktiske tabelstruktur
+- In-memory database nulstilles for hver testkørsel (men det er som regel ønskeligt)
+
+**Læring**
+CI afslører afhængigheder til lokalt miljø som er usynlige under udvikling. Database-filer må aldrig være en forudsætning for at køre tests - test-miljøet skal være fuldt selvforsynende og reproducerbart.
