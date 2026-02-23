@@ -85,12 +85,16 @@ class WhoknowsApp < Sinatra::Base
   # OpenAPI: operationId "serve_register_page_register_get"
   # GET /register - viser registrerings-formularen
   get '/register' do
+    redirect '/' if logged_in?
+
     erb :register, locals: { error: nil }
   end
 
   # GET /login - Login page
   # OpenAPI: operationId "serve_login_page_login_get"
   get '/login' do
+    redirect '/' if logged_in?
+    
     @error = nil
     erb :login
   end
